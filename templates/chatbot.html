@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/chatbot.css') }}">
+
+    <title>Emergency Assistance Chatbot</title>
+     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #0061ff, #60efff);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 400px;
+            max-height: calc(100vh - 200px);
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            position: relative;
+            animation: messageAppear 0.3s ease-out;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #0061ff, #60efff);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background: #f0f2f5;
+            color: #1c1e21;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .input-container {
+    width: 100%;
+    max-width: 800px;
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #e4e6eb;
+    display: flex;
+    gap: 10px;
+    box-sizing: border-box;
+    }
+
+    .message-input {
+        width: 100%; /* Ensures it fits within the input-container */
+        padding: 12px 20px;
+        border: 2px solid #e4e6eb;
+        border-radius: 25px;
+        outline: none;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+        resize: none;
+        max-height: 100px;
+        min-height: 50px;
+        box-sizing: border-box;
+        }
+
+        .message-input:focus {
+            border-color: #0061ff;
+        }
+
+        .send-button {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #0061ff, #60efff);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+
+        .send-button svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Typing indicator animation */
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: #f0f2f5;
+            border-radius: 15px;
+            align-self: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background: #90949c;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: blink 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+        .emergency-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.emergency-button {
+    flex-grow: 1;
+    padding: 10px;
+    /* background: linear-gradient(135deg, #ff4e50, #f9d423); */
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.emergency-button:hover {
+    transform: scale(1.05);
+}
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Emergency Assistance Chatbot</h1>
+            <p>We're here to help 24/7</p>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message">
+                Hello! I'm here to help. If you're in any emergency situation, please don't hesitate to let me know.
+            </div>
+            <div class="typing-indicator" id="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="emergency-buttons">
+            <button class="emergency-button" data-text="i am in danger">I am in danger</button>
+            <button class="emergency-button" data-text="help me">Help Me</button>
+            <button class="emergency-button" data-text="safe">safe</button>
+            <button class="emergency-button" data-text="emergency">Emergency</button>
+            <button class="emergency-button" data-text="save me">Save Me</button>
+            
+        </div>
+        <div class="input-container">
+            
+            <textarea 
+                class="message-input" 
+                id="message-input"
+                placeholder="Type your message here..."
+                rows="1"
+            ></textarea>
+            <button class="send-button" id="send-button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Send message on Enter (without shift)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', isUser ? 'user-message' : 'bot-message');
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Clear input and reset height
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            // Add user message to chat
+            addMessage(message, true);
+            
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                const response = await fetch('/generate_response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input_text: message }),
+                });
+
+                const data = await response.json();
+                
+                // Hide typing indicator
+                hideTypingIndicator();
+
+                // Check if we need to redirect to alert page
+                if (data.redirect_url) {
+                    addMessage(data.response);
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 2000);
+                } else {
+                    // Add bot response to chat
+                    addMessage(data.response);
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('Sorry, there was an error processing your message. Please try again.', false);
+                console.error('Error:', error);
+            }
+        }
+        document.querySelectorAll('.emergency-button').forEach(button => {
+    button.addEventListener('click', function() {
+        const message = this.getAttribute('data-text');
+        sendEmergencyMessage(message); // Send emergency message to generate_response directly
+    });
+});
+
+async function sendEmergencyMessage(message) {
+    // Add the message as a user message in the chat interface
+    addMessage(message, true);
+
+    // Show typing indicator while processing
+    showTypingIndicator();
+
+    try {
+        const response = await fetch('/generate_response', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ input_text: message }), // Send predefined emergency text
+        });
+
+        const data = await response.json();
+
+        // Hide typing indicator
+        hideTypingIndicator();
+
+        // If there's a redirect to the alert page, handle it
+        if (data.redirect_url) {
+            addMessage(data.response);
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 2000);
+        } else {
+            // Display the response from the bot
+            addMessage(data.response);
+        }
+    } catch (error) {
+        hideTypingIndicator();
+        addMessage('Error processing your message. Please try again later.', false);
+        console.error('Error:', error);
+    }
+}
+
+    </script>
+</body>
+</html>
